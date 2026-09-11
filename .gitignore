@@ -1,0 +1,12 @@
+# Archivos de Vagrant que no deben subirse
+*.box
+.vagrant/
+
+# Reportes de pruebas o logs generados
+*.log
+report/
+reports/
+*.xml
+*.html
+*.json
+test-results/
