@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+  vsftpd:
+    image: fauria/vsftpd
+    container_name: ftp-server
+    environment:
+      - FTP_USER=vagrant
+      - FTP_PASS=vagrant123
+    volumes:
+      - /home/vagrant/ftp:/home/vsftpd/vagrant
+    expose:
+      - 21
+    network_mode: host

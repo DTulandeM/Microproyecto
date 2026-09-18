@@ -1,40 +1,57 @@
 #!/bin/bash
 set -e
 
-export DEBIAN_FRONTEND=noninteractive
-mkdir -p /etc/needrestart/conf.d
-echo "\$nrconf{restart} = 'a';" | tee /etc/needrestart/conf.d/99-autorestart.conf > /dev/null
+echo ">>> Actualizando el sistema..."
+apt-get update -y
+apt-get upgrade -y
 
-for ct in web1 web2; do
+echo ">>> Instalando dependencias base..."
+apt-get install -y \
+    ca-certificates \
+    curl \
+    gnupg \
+    apt-transport-https \
+    ftp \
+    nano \
+    git
 
-  echo ">>> Configurando $ct"
+# -----------------------------------------------------------------------
+# Docker
+# -----------------------------------------------------------------------
+echo ">>> Instalando Docker..."
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
 
-  # 1. Instalar Node.js dentro del contenedor
-  lxc exec $ct -- bash -c "curl -fsSL https://deb.nodesource.com/setup_20.x | bash -"
-  lxc exec $ct -- apt-get install -y nodejs
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-  # 2. Crear el directorio de la app dentro del contenedor
-  lxc exec $ct -- mkdir -p /opt/app
+apt-get update -y
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-  # 3. Generar el index.js en la VM host y empujarlo al contenedor
-  cat > /tmp/index.js << 'EOF'
-const express = require('express');
-const os = require('os');
-const app = express();
-const PORT = process.env.PORT || 3000;
+usermod -aG docker vagrant
 
-app.get('/', (req, res) => {
-  res.send(`Respuesta desde: ${os.hostname()} (puerto ${PORT})\n`);
-});
-app.get('/health', (req, res) => res.status(200).send('OK'));
+# -----------------------------------------------------------------------
+# kubectl (anclado a la misma minor version que usa Minikube, ver README)
+# -----------------------------------------------------------------------
+echo ">>> Instalando kubectl..."
+K8S_MINOR_VERSION="v1.31"
+curl -fsSL https://pkgs.k8s.io/core:/stable:/${K8S_MINOR_VERSION}/deb/Release.key | \
+  gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${K8S_MINOR_VERSION}/deb/ /" | \
+  tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
+apt-get update -y
+apt-get install -y kubectl
 
-app.listen(PORT, '0.0.0.0', () => console.log(`Escuchando en ${PORT}`));
-EOF
+# -----------------------------------------------------------------------
+# Minikube
+# -----------------------------------------------------------------------
+echo ">>> Instalando Minikube (amd64)..."
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+install minikube-linux-amd64 /usr/local/bin/minikube
+rm -f minikube-linux-amd64
 
-  lxc file push /tmp/index.js $ct/opt/app/index.js
-
-  # 4. package.json + instalar express dentro del contenedor
-  lxc exec $ct -- bash -c "cd /opt/app && npm init -y && npm install express"
-
-
-done
+echo ">>> Aprovisionamiento completado."
+echo ">>> Conéctate con 'vagrant ssh servidorUbuntu' y sigue el README.md para levantar cada servicio."
