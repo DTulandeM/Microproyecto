@@ -1,0 +1,16 @@
+config:
+  # Dirección del servidor bajo prueba
+  target: "http://localhost:8404"
+  
+  # Fases de carga: definen cómo entran los usuarios concurrentes
+  phases:
+    - duration: 60          # Duración de la fase en segundos
+      arrivalRate: 100        # Crea 100 nuevos usuarios cada segundo
+      #rampTo: 20            # Incrementa la carga linealmente hasta 20 usuarios por segundo
+      name: "Fase de alta"
+
+
+scenarios:
+  - flow:
+      - get:
+          url: "/"
