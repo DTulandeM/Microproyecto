@@ -33,10 +33,6 @@ Conéctate al servidor:
 vagrant ssh servidorUbuntu
 ```
 
-> Si el script de aprovisionamiento falla o quieres reinstalar algo manualmente,
-> revisa la sección **Problemas conocidos** al final de este documento.
-
----
 
 ## 2. Sitio web con Docker + volúmenes
 
@@ -90,10 +86,6 @@ cd /vagrant/hello-node
 docker build -t hello-node:v1 .
 ```
 
-Si el build falla con un error de `buildkit`, usa el builder clásico:
-```bash
-DOCKER_BUILDKIT=0 docker build -t hello-node:v1 .
-```
 
 Despliega:
 ```bash
@@ -116,12 +108,12 @@ minikube addons enable ingress
 kubectl apply -f kubernetes/example-ingress.yaml
 ```
 
-Verifica que tenga IP asignada (puede tardar ~1 min):
+Verifica que tenga IP asignada:
 ```bash
 kubectl get ingress
 ```
 
-Para probarlo desde el navegador del HOST (tu Mac/PC), no solo desde la VM:
+Para probarlo desde el navegador del HOST, no solo desde la VM:
 
 1. En la VM, reenvía el controller a todas las interfaces:
    ```bash
