@@ -161,32 +161,4 @@ kubectl rollout undo deployment/rolling-demo
 
 ---
 
-## Problemas conocidos y soluciones
 
-| Problema | Causa | Solución |
-|---|---|---|
-| `Exec format error` al correr minikube | Binario descargado para arquitectura equivocada (ARM vs x86_64) | Verificar con `uname -m` y descargar el binario correcto (`minikube-linux-amd64` para x86_64) |
-| `no space left on device` | Disco de la VM lleno (imágenes Docker acumuladas) | `sudo docker system prune -a --volumes` |
-| Build falla con `moby/buildkit` / `404 page not found` | BuildKit no puede descargar su imagen dentro del entorno Docker de Minikube | Usar `DOCKER_BUILDKIT=0 docker build ...` |
-| Imagen construida no aparece en `docker images` dentro de Minikube | Se construyó con `sudo docker build`, que ignora las variables de `eval $(minikube docker-env)` | Construir sin `sudo`, o usar `sudo -E` para preservar el entorno |
-| Pods en `ErrImagePull` / `ImagePullBackOff` | Kubernetes intenta descargar la imagen de un registry externo en vez de usar la local | Confirmar que la imagen se construyó con el Docker de Minikube activo (`eval $(minikube docker-env)`) |
-| `kubectl version` muestra diferencia de versión cliente/servidor | El repo apt de `kubectl` está anclado a una minor version distinta a la de Minikube | Actualizar `/etc/apt/sources.list.d/kubernetes.list` a la minor version correcta, o usar `minikube kubectl --` |
-| VM se cae al instalar TensorFlow | Imagen base `alpine` compila TensorFlow desde cero (sin wheels precompilados), consume toda la RAM | Usar imagen base `python:3.12-slim` en vez de `alpine` |
-| Ingress no responde desde el navegador del host | La IP de `minikube ip` solo es accesible dentro de la VM | Usar `kubectl port-forward --address 0.0.0.0` y editar el `/etc/hosts` de la máquina host, no el de la VM |
-
----
-
-## Verificación de reproducibilidad
-
-Antes de compartir el repo con el grupo, se recomienda destruir el entorno y
-reconstruirlo solo a partir de lo que está en git:
-
-```bash
-vagrant destroy -f
-git clone <URL-DE-ESTE-REPO> prueba-repro
-cd prueba-repro
-vagrant up
-```
-
-Si el README se puede seguir de principio a fin sin pasos ocultos, el
-entorno es reproducible para el resto del grupo.
